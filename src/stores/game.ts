@@ -52,6 +52,8 @@ export const useGameStore = defineStore('game', () => {
     [0, -1],
     [0, 1],
   ]
+  /** black need more komi place to win since it is first move */
+  const komi = ref<number>(7.5)
 
   /** index position from 2-D to 1-D */
   const index = (x: number, y: number) => y * size.value + x
@@ -240,6 +242,157 @@ export const useGameStore = defineStore('game', () => {
     toggleChanged()
   }
 
+  function inBoard(x: number, y: number, size: number): boolean {
+    return x >= 0 && y >= 0 && x < size && y < size
+  }
+
+  /** to determine territories belong to black or white */
+  function floodFillTerritory(
+    board: Int8Array,
+    startX: number,
+    startY: number,
+    size: number,
+    visited: Set<number>,
+  ) {
+    const stack: [number, number][] = [[startX, startY]]
+    const territory: number[] = []
+
+    let touchesBlack = false
+    let touchesWhite = false
+
+    while (stack.length) {
+      const [x, y] = stack.pop()!
+      const idx = y * size + x
+
+      if (visited.has(idx)) continue
+      visited.add(idx)
+
+      if (board[idx] !== Stone.Empty) continue
+
+      territory.push(idx)
+
+      for (const [dx, dy] of directions) {
+        const nx = x + dx!
+        const ny = y + dy!
+        if (!inBoard(nx, ny, size)) continue
+
+        const nidx = ny * size + nx
+        const v = board[nidx]
+
+        if (v === Stone.Empty) {
+          stack.push([nx, ny])
+        } else if (v === Stone.Black) {
+          touchesBlack = true
+        } else if (v === Stone.White) {
+          touchesWhite = true
+        }
+      }
+    }
+
+    if (touchesBlack && !touchesWhite) {
+      return { owner: Stone.Black, count: territory.length }
+    }
+    if (touchesWhite && !touchesBlack) {
+      return { owner: Stone.White, count: territory.length }
+    }
+
+    return { owner: Stone.Empty, count: 0 }
+  }
+
+  const CN_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
+
+  function numberToChinese(n: number): string {
+    if (n < 10) return CN_NUM[n]!
+    if (n < 20) return '十' + (n % 10 === 0 ? '' : CN_NUM[n % 10])
+    if (n < 100) {
+      const tens = Math.floor(n / 10)
+      const ones = n % 10
+      return CN_NUM[tens] + '十' + (ones === 0 ? '' : CN_NUM[ones])
+    }
+    return n.toString()
+  }
+
+  function formatGoScore(diff: number): string {
+    const sign = diff > 0 ? '黑胜 ' : '白胜 '
+    const abs = Math.abs(diff)
+
+    const integer = Math.floor(abs)
+    const fraction = abs - integer
+
+    let result = ''
+
+    if (integer > 0) {
+      result += numberToChinese(integer)
+    }
+
+    if (fraction > 0) {
+      const fracMap: Record<number, string> = {
+        0.25: '四分之一',
+        0.5: '二分之一',
+        0.75: '四分之三',
+      }
+
+      const fracText = fracMap[fraction]
+      if (fracText) {
+        result += integer > 0 ? '又' + fracText : fracText
+      }
+    }
+
+    return sign + result + '子'
+  }
+
+  function determineWhoIsWinner() {
+    let blackStones = 0
+    let whiteStones = 0
+    let blackTerritory = 0
+    let whiteTerritory = 0
+
+    const visited = new Set<number>()
+
+    for (let i = 0; i < board.length; i++) {
+      const v = board[i]
+
+      if (v === Stone.Black) {
+        blackStones++
+        continue
+      }
+
+      if (v === Stone.White) {
+        whiteStones++
+        continue
+      }
+
+      if (v === Stone.Empty && !visited.has(i)) {
+        const x = i % size.value
+        const y = (i / size.value) | 0
+
+        const res = floodFillTerritory(board, x, y, size.value, visited)
+        if (res.owner === Stone.Black) blackTerritory += res.count
+        if (res.owner === Stone.White) whiteTerritory += res.count
+      }
+    }
+
+    const blackScore = blackStones + blackTerritory
+    const whiteScore = whiteStones + whiteTerritory + komi.value
+
+    const diff = blackScore - whiteScore
+
+    return {
+      black: {
+        stones: blackStones,
+        territory: blackTerritory,
+        total: blackScore,
+      },
+      white: {
+        stones: whiteStones,
+        territory: whiteTerritory,
+        komi: komi.value,
+        total: whiteScore,
+      },
+      result: diff === 0 ? 'Draw' : formatGoScore(diff),
+    }
+  }
+
   return {
     // state
     size,
@@ -247,6 +400,7 @@ export const useGameStore = defineStore('game', () => {
     changed,
     history,
     starPoints,
+    komi,
     // board access (readonly)
     get board() {
       return board
@@ -256,6 +410,7 @@ export const useGameStore = defineStore('game', () => {
     placeStone,
     removeStones,
     undo,
+    determineWhoIsWinner,
     reset,
   }
 })
