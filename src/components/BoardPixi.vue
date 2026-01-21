@@ -1,7 +1,12 @@
 <template>
-  <div class="go-board-container">
-    <div ref="canvasContainer" class="canvas-wrapper" @click.stop="handleBoardClick"></div>
-  </div>
+  <div
+    ref="canvasContainer"
+    :style="{
+      backgroundImage: `url(${boardImg})`,
+    }"
+    class="canvas-wrapper"
+    @click.stop="handleBoardClick"
+  ></div>
 </template>
 
 <script setup lang="ts">
@@ -9,6 +14,7 @@ import { useGameStore, Stone } from '@/stores'
 import { useUIStore } from '@/stores/ui'
 import { createStoneParticle, texture } from '@/utils'
 import * as PIXI from 'pixi.js'
+import { boardImg } from '@/assets'
 
 const game = useGameStore()
 const ui = useUIStore()
@@ -62,8 +68,8 @@ async function initApp() {
   await app.init({
     width: displaySize.value,
     height: displaySize.value,
-    backgroundColor: 0xdca858,
     antialias: true,
+    backgroundAlpha: 0,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
   })
@@ -166,23 +172,12 @@ const handleBoardClick = (e: MouseEvent) => {
 </script>
 
 <style scoped>
-.go-board-container {
-  position: relative;
-  display: inline-block;
-  padding: 30px;
-  min-width: 375px;
-  min-height: 375px;
-}
-
 .canvas-wrapper {
-  border: 2px solid #000;
+  display: inline-flex;
+  border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 768px) {
-  .go-board-container {
-    width: 100%;
-    height: 100%;
-  }
 }
 </style>
