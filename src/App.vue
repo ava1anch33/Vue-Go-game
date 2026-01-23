@@ -1,14 +1,7 @@
 <script setup lang="ts">
-import BoardPixi from './components/BoardPixi.vue'
-import { useGameStore, useUIStore } from './stores'
+import { useUIStore } from './stores'
 
 const ui = useUIStore()
-const game = useGameStore()
-
-function determineWhoIsWinner() {
-  const result = game.determineWhoIsWinner()
-  alert(`Game Over! Winner: ${result.result}`)
-}
 
 onMounted(() => {
   ui.updateSize()
@@ -22,14 +15,7 @@ onUnmounted(() => {
 
 <template>
   <div id="app">
-    <main class="app-main">
-      <div class="board-section">
-        <div class="board-layout">
-          <BoardPixi />
-        </div>
-        <button @click.stop="determineWhoIsWinner()">tttttttestttttt</button>
-      </div>
-    </main>
+    <router-view />
   </div>
 </template>
 
