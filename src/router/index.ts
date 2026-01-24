@@ -16,35 +16,33 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { requiresAuth: false }
-    },
-    {
-      path: '/home',
-      name: 'home',
-      component: HomeView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/game',
-      name: 'game',
-      component: GameView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: false },
     },
     {
       path: '/',
-      redirect: '/login'
+      name: 'home',
+      component: HomeView,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '/game',
+          name: 'game',
+          component: GameView,
+        },
+      ],
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('../views/NotFound.vue')
-    }
-  ]
+      component: () => import('../views/NotFound.vue'),
+    },
+  ],
 })
 
 router.beforeEach((to, from, next) => {
   const requiresAuth = to.meta.requiresAuth
-  
+  console.log(isAuthenticated())
+
   if (requiresAuth && !isAuthenticated()) {
     // no auth -> to login
     next({ name: 'login' })

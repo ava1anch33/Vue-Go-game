@@ -1,54 +1,63 @@
-import { apiLogin } from "@/api"
-import router from "@/router"
+import { apiLogin, apiLookForUserInfo } from '@/api'
+import router from '@/router'
+import type { User } from '@/types'
 
 export const useAuthStore = defineStore('auth', () => {
-    const token = ref<string | null>(null)
-    const currentUser = ref(null)
+  const token = ref<string | null>(null)
+  const currentUser = ref<User | null>(null)
 
-    async function login(email: string, password: string) {
-        try {
-            const res = await apiLogin(email, password)
-            if (res) {
-                const { accessToken, user } = res
-                setToken(accessToken)
-                currentUser.value = user
-                console.log(currentUser.value);
-                console.log(token.value);
-                
-                
-                router.replace('/home')
-            } else {
-                throw new Error('Network Error')
-            }
-        } catch (error) {
-            
-        }
-    }
+  async function login(email: string, password: string) {
+    try {
+      const res = await apiLogin(email, password)
+      if (res) {
+        const { accessToken, user } = res
+        setToken(accessToken)
+        await getUserDetail(user.email)
+        router.replace('/')
+      } else {
+        throw new Error('Network Error')
+      }
+    } catch (error) {}
+  }
 
-    function hasToken(): boolean {
-        return Boolean(token.value)
-    }
+  async function getUserDetail(email: string) {
+    try {
+      const res = await apiLookForUserInfo(email)
+      if (res) {
+        currentUser.value = res.user
+      }
+    } catch (error) {}
+  }
 
-    function setToken(newToken: string) {
-        token.value = newToken
-        localStorage.setItem('accessToken', newToken)
-    }
+  function hasToken(): boolean {
+    syncTokenWithStore()
+    return Boolean(token.value)
+  }
 
-    function clearToken() {
-        token.value = null
-        localStorage.removeItem('accessToken')
-    }
+  function setToken(newToken: string) {
+    token.value = newToken
+    localStorage.setItem('accessToken', newToken)
+  }
 
-    return {
-        get token() {
-            return token.value
-        },
-        get user() {
-            return currentUser.value
-        },
-        hasToken,
-        login,
-        setToken,
-        clearToken,
-    }
+  function clearToken() {
+    token.value = null
+    localStorage.removeItem('accessToken')
+  }
+
+  function syncTokenWithStore() {
+    token.value = localStorage.getItem('accessToken')
+  }
+
+  return {
+    get token() {
+      return token
+    },
+    get user() {
+      return currentUser
+    },
+    hasToken,
+    login,
+    setToken,
+    clearToken,
+  }
 })
