@@ -10,14 +10,27 @@
 </template>
 
 <script setup lang="ts">
-import { useGameStore, Stone } from '@/stores'
+import { useGameStore } from '@/stores'
 import { useUIStore } from '@/stores/ui'
 import { createStoneParticle, texture } from '@/utils'
 import * as PIXI from 'pixi.js'
 import { boardImg } from '@/assets'
+import { Stone } from '@/types'
+
+const props = defineProps<{
+    callback: (x: number, y: number) => void
+}>()
 
 const game = useGameStore()
 const ui = useUIStore()
+
+watch(
+  () => game.changed,
+  () => {
+    rerender()
+  },
+  { deep: true }
+)
 
 const padding = 60
 const displaySize = computed(() => {
@@ -112,13 +125,10 @@ function drawBoard() {
 /**
  * synchronize the stones on the board with the game state
  */
-const syncStones = () => {
+function syncStones() {
   if (!stoneLayer || !app) return
-
   stoneLayer.removeParticles()
-
   const cell = cellSize.value
-
   for (let i = 0; i < game.board.length; i++) {
     const stone = game.board[i] as Stone
     if (stone === Stone.Empty) continue
@@ -142,22 +152,17 @@ onUnmounted(() => {
   }
 })
 
-watch(
-  () => game.changed,
-  () => {
-    drawBoard()
-    syncStones()
-  },
-)
-
 watch(displaySize, async () => {
-  if (!app) return
-  const size = displaySize.value
-  app.renderer.resize(size, size)
+  rerender()
+})
 
+function rerender() {
+    if (!app) return
+    const size = displaySize.value
+  app.renderer.resize(size, size)
   drawBoard()
   syncStones()
-})
+}
 
 // handle board click event
 const handleBoardClick = (e: MouseEvent) => {
@@ -167,7 +172,7 @@ const handleBoardClick = (e: MouseEvent) => {
 
   if (x < 0 || y < 0 || x >= game.size || y >= game.size) return
 
-  game.placeStone(x, y)
+  props.callback(x, y)
 }
 </script>
 

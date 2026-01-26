@@ -1,10 +1,19 @@
-import { apiLogin, apiLookForUserInfo } from '@/api'
+import { apiLogin, apiLogout, apiLookForUserInfo } from '@/api'
 import router from '@/router'
 import type { User } from '@/types'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   const currentUser = ref<User | null>(null)
+
+  async function logout() {
+    try {
+        await apiLogout()
+    } finally {
+        localStorage.clear()
+        window.location.href = '/login'
+    }
+  }
 
   async function login(email: string, password: string) {
     try {
@@ -13,11 +22,14 @@ export const useAuthStore = defineStore('auth', () => {
         const { accessToken, user } = res
         setToken(accessToken)
         await getUserDetail(user.email)
-        router.replace('/')
+        router.replace('/go/home')
       } else {
         throw new Error('Network Error')
       }
-    } catch (error) {}
+    } catch {
+        localStorage.clear()
+        window.location.href = '/login'
+    }
   }
 
   async function getUserDetail(email: string) {
@@ -57,6 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
     },
     hasToken,
     login,
+    logout,
     setToken,
     clearToken,
   }

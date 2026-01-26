@@ -3,23 +3,27 @@ import { FetchPost } from './httpClient'
 
 export async function apiLogin(email: string, password: string) {
   try {
-    const res = await FetchPost<{ user: User; accessToken: string }>('/login', {
+    return await FetchPost<{ user: User; accessToken: string }>('/login', {
       email,
       password,
     })
-
-    return res
   } catch {
-    localStorage.clear()
-    window.location.href = '/login'
+    throw new Error()
+  }
+}
+
+export async function apiLogout() {
+    try {
+        return await FetchPost('/logout')
+  } catch {
+    throw new Error()
   }
 }
 
 export async function apiLookForUserInfo(email: string) {
   try {
-    const res = await FetchPost<{ user: User }>('/user', {
+    return await FetchPost<{ user: User }>('/user', {
       email,
     })
-    return res
   } catch {}
 }

@@ -1,4 +1,4 @@
-import { Stone } from '@/stores'
+import { Stone } from '@/types'
 import * as PIXI from 'pixi.js'
 
 /**

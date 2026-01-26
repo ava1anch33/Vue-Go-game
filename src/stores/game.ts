@@ -1,10 +1,5 @@
-import type { Position } from '@/types'
-
-export enum Stone {
-  Empty = 0,
-  Black = 1,
-  White = 2,
-}
+import { apiAiThinking, apiCreateNewGame } from '@/api'
+import { Stone, type Position } from '@/types'
 
 /**
  * Game Store - manages the state of the Go game including board size, stones, current player, and history.
@@ -31,11 +26,12 @@ export const useGameStore = defineStore('game', () => {
     return points
   })
   /** real board data, use continue memory to enhance performance */
-  let board = new Int8Array(size.value * size.value)
+  const board = new Int8Array(19 * 19).fill(0)
   /** Current player */
   const currentPlayer = ref<Stone>(Stone.Black)
   /** trigger webGL render stone */
   const changed = ref(false)
+  const gameId = ref<string | null>(null)
   /** playing history */
   const history = ref<
     {
@@ -166,7 +162,7 @@ export const useGameStore = defineStore('game', () => {
     currentPlayer.value = color === Stone.Black ? Stone.White : Stone.Black
 
     // notify webGL to render
-    changed.value = !changed.value
+    toggleChanged()
     return true
   }
 
@@ -236,10 +232,16 @@ export const useGameStore = defineStore('game', () => {
 
   function reset(newSize: 19 | 13 | 9 = 19) {
     size.value = newSize
-    board = new Int8Array(newSize * newSize)
+    batchSetBoard(new Int8Array(newSize * newSize))
     history.value = []
     currentPlayer.value = Stone.Black
     toggleChanged()
+  }
+
+  function batchSetBoard(arr: Int8Array) {
+    for (let index = 0; index < arr.length; index++) {
+      board[index] = arr[index]!;
+    }
   }
 
   function inBoard(x: number, y: number, size: number): boolean {
@@ -393,6 +395,36 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
+  async function createNewGame(name: string, aiFirst: boolean) {
+    const { board: newBoard, currentPlayer: newCurrentPlayer, gameId: id  } = await apiCreateNewGame(name, aiFirst)
+    reRenderBoardFromBackend(newBoard, newCurrentPlayer, id)
+  }
+
+  async function getAiThinking(aiAttempts: number) {
+    if (!gameId.value) return
+    const { board: newBoard, currentPlayer: newCurrentPlayer } = await apiAiThinking(board, gameId.value, currentPlayer.value, aiAttempts)
+    reRenderBoardFromBackend(newBoard, newCurrentPlayer)
+  }
+
+  function reRenderBoardFromBackend(newBoard: Array<number>, newCurrentPlayer: Stone, id?: string) {
+    const safeArray = convertArrayToInt8Array(newBoard)
+    batchSetBoard(safeArray)
+    currentPlayer.value = newCurrentPlayer
+    if (id) {
+      gameId.value = id
+    }
+    toggleChanged()
+  }
+
+  function convertArrayToInt8Array(arr: Array<number>) {
+    const safeArray = new Int8Array(arr.length)
+    arr.forEach((v, i) => {
+      const num = Number(v)
+      safeArray[i] = Number.isNaN(num) || !Number.isInteger(num) ? 0 : num
+    })
+    return safeArray
+  }
+
   return {
     // state
     size,
@@ -401,10 +433,7 @@ export const useGameStore = defineStore('game', () => {
     history,
     starPoints,
     komi,
-    // board access (readonly)
-    get board() {
-      return board
-    },
+    board,
     stoneAt,
     // actions
     placeStone,
@@ -412,5 +441,7 @@ export const useGameStore = defineStore('game', () => {
     undo,
     determineWhoIsWinner,
     reset,
+    createNewGame,
+    getAiThinking
   }
 })

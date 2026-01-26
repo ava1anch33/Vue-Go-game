@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/Login.vue'
 import HomeView from '../views/Home.vue'
-import GameView from '../views/Game.vue'
+import GameView from '../views/Practice.vue'
 import { useAuthStore } from '@/stores'
 
 const isAuthenticated = () => {
@@ -15,21 +15,43 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: LoginView,
-      meta: { requiresAuth: false },
+      component: LoginView
     },
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: { requiresAuth: true },
+      path: '/go',
+      component: () => import('@/views/HomeLayout.vue'),
       children: [
         {
-          path: '/game',
-          name: 'game',
-          component: GameView,
+          path: 'home',
+          name: 'Home',
+          component: () => import('@/views/Home.vue'),
         },
+        {
+          path: 'practice',
+          name: 'Practice',
+          component: () => import('@/views/Practice.vue'),
+        },
+        {
+          path: 'analysis',
+          name: 'Analysis',
+          component: () => import('@/views/Analyst.vue'),
+        },
+        {
+          path: 'setting',
+          name: 'Setting',
+          component: () => import('@/views/Setting.vue')
+        },
+        {
+          path: 'ai-game',
+          name: 'AiGame',
+          component: () => import('@/views/AiGame.vue')
+        },
+        {
+          path: '',
+          redirect: { name: 'Home' },
+        }
       ],
+      meta: { requiresAuth: true },
     },
     {
       path: '/:pathMatch(.*)*',

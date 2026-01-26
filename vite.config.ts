@@ -29,6 +29,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       }
+    },
+    watch: {
+      ignored: ['**/node_modules/**'],
+      usePolling: true,           
+      interval: 10000,            
+      binaryInterval: 1000,
+      followSymlinks: true
     }
   }
 })
