@@ -24,8 +24,7 @@
         </ul>
       </nav>
 
-      <div class="sidebar-footer">
-      </div>
+      <div class="sidebar-footer"></div>
     </aside>
 
     <main class="main-content">
@@ -95,11 +94,11 @@ const avatarUrl = ref<string | null>(null)
 const objectUrl = ref<string | null>(null)
 
 const navLinks = [
-  { route: '/go/home', label: '主页', icon: '🏠'},
+  { route: '/go/home', label: '主页', icon: '🏠' },
   { route: '/go/ai-game', label: 'AI对弈', icon: '🤖' },
   { route: '/go/practice', label: '练习', icon: '🪨' },
   { route: '/go/analysis', label: '分析', icon: '📊' },
-  { route: '/go/setting', label: '设置', icon: '⚙️' }
+  { route: '/go/setting', label: '设置', icon: '⚙️' },
 ]
 
 const isActive = (linkRoute: string) => {

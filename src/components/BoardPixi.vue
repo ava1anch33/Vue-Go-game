@@ -18,7 +18,7 @@ import { boardImg } from '@/assets'
 import { Stone } from '@/types'
 
 const props = defineProps<{
-    callback: (x: number, y: number) => void
+  callback: (x: number, y: number) => void
 }>()
 
 const game = useGameStore()
@@ -29,7 +29,7 @@ watch(
   () => {
     rerender()
   },
-  { deep: true }
+  { deep: true },
 )
 
 const padding = 60
@@ -157,8 +157,8 @@ watch(displaySize, async () => {
 })
 
 function rerender() {
-    if (!app) return
-    const size = displaySize.value
+  if (!app) return
+  const size = displaySize.value
   app.renderer.resize(size, size)
   drawBoard()
   syncStones()

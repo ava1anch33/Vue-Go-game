@@ -6,18 +6,11 @@ import { Stone, type Position } from '@/types'
  */
 export const useGameStore = defineStore('game', () => {
   /** Board size */
-  const size = ref<19 | 13 | 9>(19)
+  const size = 19
   /** Position of Star */
   const starPoints = computed(() => {
-    const points = []
-    const starCoords =
-      size.value === 19
-        ? [3, 9, 15]
-        : size.value === 13
-          ? [3, 6, 9]
-          : size.value === 9
-            ? [2, 4, 6]
-            : []
+    const points = [];
+    const starCoords = [3, 9, 15];
     for (const x of starCoords) {
       for (const y of starCoords) {
         points.push({ x, y })
@@ -26,7 +19,7 @@ export const useGameStore = defineStore('game', () => {
     return points
   })
   /** real board data, use continue memory to enhance performance */
-  const board = new Int8Array(19 * 19).fill(0)
+  const board = new Int8Array(size * size).fill(0)
   /** Current player */
   const currentPlayer = ref<Stone>(Stone.Black)
   /** trigger webGL render stone */
@@ -52,7 +45,7 @@ export const useGameStore = defineStore('game', () => {
   const komi = ref<number>(7.5)
 
   /** index position from 2-D to 1-D */
-  const index = (x: number, y: number) => y * size.value + x
+  const index = (x: number, y: number) => y * size + x
   const stoneAt = (x: number, y: number) => board[index(x, y)]
 
   /** to calculate a potion liberties */
@@ -116,7 +109,7 @@ export const useGameStore = defineStore('game', () => {
         x,
         y,
         currentPlayer.value,
-        size.value,
+        size,
         history.value[history.value.length - 1]?.x !== undefined
           ? {
               x: history.value[history.value.length - 1]!.x,
@@ -136,15 +129,15 @@ export const useGameStore = defineStore('game', () => {
     directions.forEach(([dx, dy]) => {
       const nx = x + dx!
       const ny = y + dy!
-      if (nx >= 0 && ny >= 0 && nx < size.value && ny < size.value) {
+      if (nx >= 0 && ny >= 0 && nx < size && ny < size) {
         const neighborIdx = index(nx, ny)
         const neighbor = board[neighborIdx]
 
         // if neighbor is opponent's stone, check if it has liberties
         if (neighbor !== 0 && neighbor !== color) {
-          const liberties = getLiberties(board, nx, ny, size.value)
+          const liberties = getLiberties(board, nx, ny, size)
           if (liberties === 0) {
-            const capturedStones = removeCapturedStones(board, nx, ny, size.value, neighbor!)
+            const capturedStones = removeCapturedStones(board, nx, ny, size, neighbor!)
             captured.push(...capturedStones)
           }
         }
@@ -230,9 +223,8 @@ export const useGameStore = defineStore('game', () => {
     toggleChanged()
   }
 
-  function reset(newSize: 19 | 13 | 9 = 19) {
-    size.value = newSize
-    batchSetBoard(new Int8Array(newSize * newSize))
+  function reset() {
+    batchSetBoard(new Int8Array(size * size))
     history.value = []
     currentPlayer.value = Stone.Black
     toggleChanged()
@@ -240,7 +232,7 @@ export const useGameStore = defineStore('game', () => {
 
   function batchSetBoard(arr: Int8Array) {
     for (let index = 0; index < arr.length; index++) {
-      board[index] = arr[index]!;
+      board[index] = arr[index]!
     }
   }
 
@@ -365,10 +357,10 @@ export const useGameStore = defineStore('game', () => {
       }
 
       if (v === Stone.Empty && !visited.has(i)) {
-        const x = i % size.value
-        const y = (i / size.value) | 0
+        const x = i % size
+        const y = (i / size) | 0
 
-        const res = floodFillTerritory(board, x, y, size.value, visited)
+        const res = floodFillTerritory(board, x, y, size, visited)
         if (res.owner === Stone.Black) blackTerritory += res.count
         if (res.owner === Stone.White) whiteTerritory += res.count
       }
@@ -396,14 +388,28 @@ export const useGameStore = defineStore('game', () => {
   }
 
   async function createNewGame(name: string, aiFirst: boolean) {
-    const { board: newBoard, currentPlayer: newCurrentPlayer, gameId: id  } = await apiCreateNewGame(name, aiFirst)
+    const {
+      board: newBoard,
+      currentPlayer: newCurrentPlayer,
+      gameId: id,
+    } = await apiCreateNewGame(name, aiFirst)
     reRenderBoardFromBackend(newBoard, newCurrentPlayer, id)
   }
 
   async function getAiThinking(aiAttempts: number) {
     if (!gameId.value) return
-    const { board: newBoard, currentPlayer: newCurrentPlayer } = await apiAiThinking(board, gameId.value, currentPlayer.value, aiAttempts)
-    reRenderBoardFromBackend(newBoard, newCurrentPlayer)
+    const { aiSuccess, board: newBoard, currentPlayer: newCurrentPlayer } = await apiAiThinking(
+      board,
+      gameId.value,
+      currentPlayer.value,
+      aiAttempts,
+    )
+    if (aiSuccess) {
+      reRenderBoardFromBackend(newBoard, newCurrentPlayer)
+    } else {
+      // TODO ai 认输
+    }
+    return aiSuccess
   }
 
   function reRenderBoardFromBackend(newBoard: Array<number>, newCurrentPlayer: Stone, id?: string) {
@@ -442,6 +448,6 @@ export const useGameStore = defineStore('game', () => {
     determineWhoIsWinner,
     reset,
     createNewGame,
-    getAiThinking
+    getAiThinking,
   }
 })

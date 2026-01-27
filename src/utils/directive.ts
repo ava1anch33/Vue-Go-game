@@ -1,4 +1,4 @@
-import type { Directive } from "vue"
+import type { Directive } from 'vue'
 
 export const loadingDirective: Directive<HTMLElement, boolean> = {
   mounted(el, binding) {
@@ -15,9 +15,8 @@ export const loadingDirective: Directive<HTMLElement, boolean> = {
     loadingEl.style.display = 'none'
 
     el.style.position = 'relative'
-    el.appendChild(loadingEl);
-
-    (el as any)._loadingEl = loadingEl
+    el.appendChild(loadingEl)
+    ;(el as any)._loadingEl = loadingEl
   },
 
   updated(el, binding) {
@@ -43,5 +42,5 @@ export const loadingDirective: Directive<HTMLElement, boolean> = {
       loadingEl.parentNode.removeChild(loadingEl)
     }
     delete (el as any)._loadingEl
-  }
+  },
 }

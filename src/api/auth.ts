@@ -13,8 +13,8 @@ export async function apiLogin(email: string, password: string) {
 }
 
 export async function apiLogout() {
-    try {
-        return await FetchPost('/logout')
+  try {
+    return await FetchPost('/logout')
   } catch {
     throw new Error()
   }

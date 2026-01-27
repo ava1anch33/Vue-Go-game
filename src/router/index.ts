@@ -15,7 +15,7 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: LoginView,
     },
     {
       path: '/go',
@@ -39,17 +39,17 @@ const router = createRouter({
         {
           path: 'setting',
           name: 'Setting',
-          component: () => import('@/views/Setting.vue')
+          component: () => import('@/views/Setting.vue'),
         },
         {
           path: 'ai-game',
           name: 'AiGame',
-          component: () => import('@/views/AiGame.vue')
+          component: () => import('@/views/AiGame.vue'),
         },
         {
           path: '',
           redirect: { name: 'Home' },
-        }
+        },
       ],
       meta: { requiresAuth: true },
     },

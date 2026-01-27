@@ -8,10 +8,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
-        await apiLogout()
+      await apiLogout()
     } finally {
-        localStorage.clear()
-        window.location.href = '/login'
+      localStorage.clear()
+      window.location.href = '/login'
     }
   }
 
@@ -27,8 +27,8 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Network Error')
       }
     } catch {
-        localStorage.clear()
-        window.location.href = '/login'
+      localStorage.clear()
+      window.location.href = '/login'
     }
   }
 

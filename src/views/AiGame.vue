@@ -1,55 +1,46 @@
 <template>
   <div class="game-layout">
-    <div class="board-area">
-      <BoardPixi 
-        :callback="handleClick" 
+    <div :class="{
+        'cursor-disable': aiThinking || !isGaming
+    }">
+      <BoardPixi
+        :callback="handleClick"
         :loading="aiThinking"
-        :disabled="aiThinking || !isGaming"
       />
     </div>
 
     <div class="settings-panel">
       <h2>游戏设置</h2>
 
-      <!-- 游戏名称 -->
       <div class="form-item">
         <label>游戏名称</label>
-        <el-input 
-          v-model="gameSettingForm.name" 
-          placeholder="请输入游戏名称"
-          :disabled="isGaming"
-        />
+        <Input v-if="!isGaming" v-model="gameSettingForm.name" />
+        <div v-else class="value">{{ gameSettingForm.name }}</div>
       </div>
 
-      <!-- AI 执黑 -->
       <div class="form-item">
-        <label>AI 先手（执黑）</label>
-        <el-switch 
-          v-model="gameSettingForm.aiFirst" 
-          :disabled="isGaming"
-        />
+        <label>AI 先手（执黑）?</label>
+        <RadioGroup v-model="gameSettingForm.aiFirst" direction="horizontal" :disabled="isGaming">
+          <Radio :value="true">是</Radio>
+          <Radio :value="false">否</Radio>
+        </RadioGroup>
       </div>
 
-      <!-- AI 尝试次数（滑块） -->
       <div class="form-item">
         <label>AI 思考强度（尝试次数）</label>
-        <el-slider 
+        <Slider
           v-model="gameSettingForm.aiAttempts"
-          :min="10"
+          :min="5"
           :max="1000"
-          :step="10"
-          show-input
-          :disabled="isGaming"
+          :step="5"
         />
-        <div class="slider-tip">
-          当前：{{ gameSettingForm.aiAttempts }} 次模拟
-        </div>
+        <div class="slider-tip">当前：{{ gameSettingForm.aiAttempts }} 次模拟</div>
       </div>
 
       <!-- 操作按钮 -->
       <div class="button-group">
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           :loading="isGaming && !aiThinking"
           @click="createNewGame"
           :disabled="isGaming"
@@ -57,40 +48,40 @@
           创建新游戏
         </Button>
 
-        <Button 
-          type="danger" 
-          @click="endGame"
-          :disabled="!isGaming"
-        >
-          收官（结束游戏）
-        </Button>
+        <Button type="danger" @click="endGame" :disabled="!isGaming"> 收官（结束游戏） </Button>
       </div>
 
       <!-- 当前状态提示 -->
       <div class="status-tip" v-if="isGaming">
         <span v-if="aiThinking">AI 正在思考...</span>
-        <span v-else>轮到 {{ game.currentPlayer === Stone.Black ? '黑方（你）' : '白方（AI）' }} 下子</span>
+        <span v-else
+          >轮到 {{ game.currentPlayer === Stone.Black ? '黑方（你）' : '白方（AI）' }} 下子</span
+        >
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
 import BoardPixi from '@/components/BoardPixi.vue'
 import Button from '@/components/ui/Button.vue'
 import { useGameStore } from '@/stores'
 import { Stone } from '@/types'
+import Input from '@/components/ui/Input.vue'
+import RadioGroup from '@/components/ui/RadioGroup.vue'
+import Radio from '@/components/ui/Radio.vue'
+import Slider from '@/components/ui/Slider.vue'
+import { showDialog } from '@/components/ui/dialog'
 
 const game = useGameStore()
 
-const isGaming = ref(false)      // 是否正在进行游戏
-const aiThinking = ref(false)    // AI 是否在思考
+const isGaming = ref(false)
+const aiThinking = ref(false)
 
 const gameSettingForm = reactive({
   name: 'newGame',
   aiFirst: false,
-  aiAttempts: 500   // 默认 500 次，平衡速度与强度
+  aiAttempts: 100
 })
 
 const createNewGame = async () => {
@@ -101,9 +92,9 @@ const createNewGame = async () => {
 
   try {
     await game.createNewGame(gameSettingForm.name, gameSettingForm.aiFirst)
-    // 如果 AI 先手，已经在 store 里处理了
   } catch (err) {
     console.error('创建游戏失败', err)
+     isGaming.value = false
   } finally {
     aiThinking.value = false
   }
@@ -117,15 +108,28 @@ const handleClick = async (x: number, y: number) => {
 
   aiThinking.value = true
   try {
-    await game.getAiThinking(gameSettingForm.aiAttempts)
+    const aiSuccess = await game.getAiThinking(gameSettingForm.aiAttempts)
+    if (aiSuccess === false) {
+        await showDialog({
+            title: '收官！',
+            content: 'AI认输！'
+        })
+        game.reset()
+    }
   } finally {
     aiThinking.value = false
   }
 }
 
-const endGame = () => {
+const endGame = async () => {
   if (!isGaming.value) return
   const result = game.determineWhoIsWinner()
+
+  await showDialog({
+   title: '胜负判断',
+   content: result.result
+  })
+
   isGaming.value = false
   game.reset()
 }
@@ -136,6 +140,11 @@ const endGame = () => {
   display: flex;
   justify-content: space-between;
   padding: 24px;
+  gap: 24px;
+}
+
+.cursor-disable {
+    cursor: not-allowed;
 }
 
 .settings-panel {
@@ -160,8 +169,14 @@ h2 {
 .form-item label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
+  font-weight: 800;
   color: #555;
+}
+
+.form-item .value {
+  display: block;
+  font-weight: 500;
+  color: #111111;
 }
 
 .button-group {
