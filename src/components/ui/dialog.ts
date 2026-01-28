@@ -9,7 +9,7 @@ function getInstance() {
     document.body.appendChild(div)
 
     const app = createApp({
-      render: () => h(Dialog, { ref: 'dialog' })
+      render: () => h(Dialog, { ref: 'dialog' }),
     })
 
     const vm = app.mount(div) as any

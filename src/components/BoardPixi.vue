@@ -17,9 +17,18 @@ import * as PIXI from 'pixi.js'
 import { boardImg } from '@/assets'
 import { Stone } from '@/types'
 
-const props = defineProps<{
-  callback: (x: number, y: number) => void
-}>()
+const props = withDefaults(
+  defineProps<{
+    showInfluence?: boolean
+    forbiddenClick?: boolean
+    callback?: (x: number, y: number) => void
+  }>(),
+  {
+    showInfluence: false,
+    forbiddenClick: false,
+    callback: () => {},
+  },
+)
 
 const game = useGameStore()
 const ui = useUIStore()
@@ -43,6 +52,7 @@ let app: PIXI.Application | null = null
 let stoneLayer: PIXI.ParticleContainer | null = null
 const canvasContainer = ref<HTMLElement | null>(null)
 let boardLayer: PIXI.Container | null = null
+let influenceLayer: PIXI.Container | null = null
 
 async function initPixi() {
   await initApp()
@@ -56,6 +66,7 @@ async function initPixi() {
  */
 function initLayerTree() {
   boardLayer = new PIXI.Container()
+  influenceLayer = new PIXI.Container()
   stoneLayer = new PIXI.ParticleContainer({
     texture,
     dynamicProperties: {
@@ -68,6 +79,7 @@ function initLayerTree() {
   })
 
   app && app.stage.addChild(boardLayer)
+  app && app.stage.addChild(influenceLayer)
   app && app.stage.addChild(stoneLayer)
 }
 
@@ -100,6 +112,45 @@ function drawBoard() {
   const cell = cellSize.value
   const halfCell = cell / 2
 
+  const starPoints = [
+    {
+      x: 3,
+      y: 3,
+    },
+    {
+      x: 3,
+      y: 9,
+    },
+    {
+      x: 3,
+      y: 15,
+    },
+    {
+      x: 9,
+      y: 3,
+    },
+    {
+      x: 9,
+      y: 9,
+    },
+    {
+      x: 9,
+      y: 15,
+    },
+    {
+      x: 15,
+      y: 3,
+    },
+    {
+      x: 15,
+      y: 9,
+    },
+    {
+      x: 15,
+      y: 15,
+    },
+  ]
+
   boardLayer.removeChildren()
   const g = new PIXI.Graphics()
 
@@ -113,13 +164,43 @@ function drawBoard() {
       .stroke({ color: 0x000000, width: 1, alpha: 1 })
   }
 
-  game.starPoints.forEach((p) => {
+  starPoints.forEach((p) => {
     const cx = (p.x + 0.5) * cell
     const cy = (p.y + 0.5) * cell
     g!.circle(cx, cy, 3).fill({ color: 0x000000 })
   })
 
   boardLayer.addChild(g)
+}
+
+function getPositionByIndex(i: number) {
+  const x = i % game.size
+  const y = Math.floor(i / game.size)
+  return { x, y }
+}
+
+/**
+ * synchronize the stone influence zone
+ */
+function syncInfluence() {
+  if (!influenceLayer || !app || !props.showInfluence) return
+  influenceLayer.removeChildren()
+  const cell = cellSize.value
+  for (let i = 0; i < game.influenceBoard.length; i++) {
+    const v = game.influenceBoard[i]
+    if (v === Stone.Empty) continue
+    const { x, y } = getPositionByIndex(i)
+    const g = new PIXI.Graphics()
+
+    if (v === Stone.Black) {
+      g.rect(x * cell, y * cell, cell, cell).fill({ color: 0x000000, alpha: 0.18 })
+    }
+
+    if (v === Stone.White) {
+      g.rect(x * cell, y * cell, cell, cell).fill({ color: 0xffffff, alpha: 0.18 })
+    }
+    influenceLayer.addChild(g)
+  }
 }
 
 /**
@@ -132,10 +213,7 @@ function syncStones() {
   for (let i = 0; i < game.board.length; i++) {
     const stone = game.board[i] as Stone
     if (stone === Stone.Empty) continue
-
-    const x = i % game.size
-    const y = Math.floor(i / game.size)
-
+    const { x, y } = getPositionByIndex(i)
     const particle = createStoneParticle(x, y, stone, cell)
     stoneLayer.addParticle(particle)
   }
@@ -157,15 +235,17 @@ watch(displaySize, async () => {
 })
 
 function rerender() {
-  if (!app) return
+  if (!app || !app.renderer) return
   const size = displaySize.value
   app.renderer.resize(size, size)
   drawBoard()
+  syncInfluence()
   syncStones()
 }
 
 // handle board click event
 const handleBoardClick = (e: MouseEvent) => {
+  if (props.forbiddenClick) return
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = Math.floor((e.clientX - rect.left) / cellSize.value)
   const y = Math.floor((e.clientY - rect.top) / cellSize.value)

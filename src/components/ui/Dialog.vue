@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import Button from './Button.vue';
+import Button from './Button.vue'
 
 const visible = ref(false)
 const title = ref('提示')
@@ -61,7 +61,7 @@ defineExpose({ open })
 .dialog-mask {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,10 +93,12 @@ button.primary {
   padding: 6px 12px;
   border-radius: 6px;
 }
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .2s;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 </style>

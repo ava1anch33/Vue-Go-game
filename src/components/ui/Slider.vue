@@ -16,29 +16,32 @@
 const props = defineProps({
   modelValue: {
     type: Number,
-    required: true
+    required: true,
   },
   min: {
     type: Number,
-    default: 0
+    default: 0,
   },
   max: {
     type: Number,
-    default: 100
+    default: 100,
   },
   step: {
     type: Number,
-    default: 1
-  }
+    default: 1,
+  },
 })
 
 const emit = defineEmits(['update:modelValue'])
 
 const innerValue = ref(Number(props.modelValue))
 
-watch(() => props.modelValue, (v) => {
-  innerValue.value = Number(v)
-})
+watch(
+  () => props.modelValue,
+  (v) => {
+    innerValue.value = Number(v)
+  },
+)
 
 watch(innerValue, (v) => {
   emit('update:modelValue', v)
@@ -71,7 +74,7 @@ watch(innerValue, (v) => {
   background: #fff;
   border: 2px solid #764ba2;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* Firefox */
@@ -82,7 +85,7 @@ watch(innerValue, (v) => {
   background: #fff;
   border: 2px solid #764ba2;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .value {

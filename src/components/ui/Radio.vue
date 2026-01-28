@@ -89,7 +89,7 @@ const handleChange = () => {
 }
 
 .radio-input:checked + .radio-outer {
-  border-color:#764ba2;
+  border-color: #764ba2;
 }
 
 .radio-inner {

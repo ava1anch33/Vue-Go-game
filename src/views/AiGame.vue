@@ -1,12 +1,88 @@
+<script setup lang="ts">
+import BoardPixi from '@/components/BoardPixi.vue'
+import Button from '@/components/ui/Button.vue'
+import { useGameStore } from '@/stores'
+import { Stone } from '@/types'
+import Input from '@/components/ui/Input.vue'
+import RadioGroup from '@/components/ui/RadioGroup.vue'
+import Radio from '@/components/ui/Radio.vue'
+import Slider from '@/components/ui/Slider.vue'
+import { showDialog } from '@/components/ui/dialog'
+
+const game = useGameStore()
+
+const isGaming = ref(false)
+const aiThinking = ref(false)
+
+const gameSettingForm = reactive({
+  name: 'newGame',
+  aiFirst: false,
+  aiAttempts: 100,
+})
+
+const createNewGame = async () => {
+  if (isGaming.value) return
+
+  isGaming.value = true
+  aiThinking.value = true
+
+  try {
+    await game.createNewGame(gameSettingForm.name, gameSettingForm.aiFirst)
+  } catch (err) {
+    console.error('创建游戏失败', err)
+    isGaming.value = false
+  } finally {
+    aiThinking.value = false
+  }
+}
+
+const handleClick = async (x: number, y: number) => {
+  if (!isGaming.value || aiThinking.value) return
+
+  const success = game.placeStone(x, y)
+  if (!success) return
+
+  aiThinking.value = true
+  try {
+    const aiSuccess = await game.getAiThinking(gameSettingForm.aiAttempts)
+    if (aiSuccess === false) {
+      await showDialog({
+        title: '收官！',
+        content: 'AI认输！',
+      })
+      game.reset()
+    }
+  } finally {
+    aiThinking.value = false
+  }
+}
+
+const endGame = async () => {
+  if (!isGaming.value) return
+  const result = game.determineWhoIsWinner()
+
+  await showDialog({
+    title: '胜负判断',
+    content: result.result,
+  })
+
+  isGaming.value = false
+  game.reset()
+}
+
+onMounted(() => {
+  game.reset()
+})
+</script>
+
 <template>
   <div class="game-layout">
-    <div :class="{
-        'cursor-disable': aiThinking || !isGaming
-    }">
-      <BoardPixi
-        :callback="handleClick"
-        :loading="aiThinking"
-      />
+    <div
+      :class="{
+        'cursor-disable': aiThinking || !isGaming,
+      }"
+    >
+      <BoardPixi :callback="handleClick" :loading="aiThinking" />
     </div>
 
     <div class="settings-panel">
@@ -28,12 +104,7 @@
 
       <div class="form-item">
         <label>AI 思考强度（尝试次数）</label>
-        <Slider
-          v-model="gameSettingForm.aiAttempts"
-          :min="5"
-          :max="1000"
-          :step="5"
-        />
+        <Slider v-model="gameSettingForm.aiAttempts" :min="5" :max="1000" :step="5" />
         <div class="slider-tip">当前：{{ gameSettingForm.aiAttempts }} 次模拟</div>
       </div>
 
@@ -62,79 +133,6 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import BoardPixi from '@/components/BoardPixi.vue'
-import Button from '@/components/ui/Button.vue'
-import { useGameStore } from '@/stores'
-import { Stone } from '@/types'
-import Input from '@/components/ui/Input.vue'
-import RadioGroup from '@/components/ui/RadioGroup.vue'
-import Radio from '@/components/ui/Radio.vue'
-import Slider from '@/components/ui/Slider.vue'
-import { showDialog } from '@/components/ui/dialog'
-
-const game = useGameStore()
-
-const isGaming = ref(false)
-const aiThinking = ref(false)
-
-const gameSettingForm = reactive({
-  name: 'newGame',
-  aiFirst: false,
-  aiAttempts: 100
-})
-
-const createNewGame = async () => {
-  if (isGaming.value) return
-
-  isGaming.value = true
-  aiThinking.value = true
-
-  try {
-    await game.createNewGame(gameSettingForm.name, gameSettingForm.aiFirst)
-  } catch (err) {
-    console.error('创建游戏失败', err)
-     isGaming.value = false
-  } finally {
-    aiThinking.value = false
-  }
-}
-
-const handleClick = async (x: number, y: number) => {
-  if (!isGaming.value || aiThinking.value) return
-
-  const success = game.placeStone(x, y)
-  if (!success) return
-
-  aiThinking.value = true
-  try {
-    const aiSuccess = await game.getAiThinking(gameSettingForm.aiAttempts)
-    if (aiSuccess === false) {
-        await showDialog({
-            title: '收官！',
-            content: 'AI认输！'
-        })
-        game.reset()
-    }
-  } finally {
-    aiThinking.value = false
-  }
-}
-
-const endGame = async () => {
-  if (!isGaming.value) return
-  const result = game.determineWhoIsWinner()
-
-  await showDialog({
-   title: '胜负判断',
-   content: result.result
-  })
-
-  isGaming.value = false
-  game.reset()
-}
-</script>
-
 <style scoped>
 .game-layout {
   display: flex;
@@ -144,7 +142,7 @@ const endGame = async () => {
 }
 
 .cursor-disable {
-    cursor: not-allowed;
+  cursor: not-allowed;
 }
 
 .settings-panel {

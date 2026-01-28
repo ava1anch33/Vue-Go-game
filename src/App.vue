@@ -81,7 +81,7 @@ body {
 
 .v-loading-spinner {
   text-align: center;
-  color: #409eff; /* Element 经典蓝 */
+  color: #409eff;
 }
 
 .circular {

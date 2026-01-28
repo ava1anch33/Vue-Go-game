@@ -1,3 +1,76 @@
+<script setup lang="ts">
+import { useAuthStore } from '@/stores'
+import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+
+const auth = useAuthStore()
+const route = useRoute()
+
+const avatarUrl = ref<string | null>(null)
+const objectUrl = ref<string | null>(null)
+
+const navLinks = [
+  { route: '/go/home', label: '主页', icon: '🏠' },
+  { route: '/go/ai-game', label: 'AI对弈', icon: '🤖' },
+  { route: '/go/practice', label: '练习', icon: '🪨' },
+  { route: '/go/analysis', label: '分析', icon: '📊' },
+  { route: '/go/setting', label: '设置', icon: '⚙️' },
+]
+
+const isActive = (linkRoute: string) => {
+  return route.path === linkRoute || route.path.startsWith(linkRoute + '/')
+}
+
+const currentPageTitle = computed(() => {
+  const matched = navLinks.find((item) => isActive(item.route))
+  return matched ? matched.label : '弈境'
+})
+
+const updateAvatar = () => {
+  const avatarData = auth.user?.profile?.avatar
+  if (objectUrl.value) {
+    URL.revokeObjectURL(objectUrl.value)
+    objectUrl.value = null
+  }
+
+  if (!avatarData) {
+    avatarUrl.value = null
+    return
+  }
+
+  let blob: Blob
+
+  if (avatarData instanceof Blob) {
+    blob = avatarData
+  } else if (avatarData instanceof ArrayBuffer || ArrayBuffer.isView(avatarData)) {
+    blob = new Blob([avatarData], { type: 'image/jpeg' })
+  } else if (typeof avatarData === 'string' && (avatarData as string).startsWith('data:image')) {
+    avatarUrl.value = avatarData
+    return
+  } else {
+    console.warn('未知的 avatar 資料格式')
+    return
+  }
+
+  objectUrl.value = URL.createObjectURL(blob)
+  avatarUrl.value = objectUrl.value
+}
+
+const handleImageError = () => {
+  avatarUrl.value = null
+}
+
+onMounted(() => {
+  updateAvatar()
+})
+
+onUnmounted(() => {
+  if (objectUrl.value) {
+    URL.revokeObjectURL(objectUrl.value)
+  }
+})
+</script>
+
 <template>
   <div class="home-page">
     <!-- 固定側邊欄 -->
@@ -81,79 +154,6 @@
     </main>
   </div>
 </template>
-
-<script setup lang="ts">
-import { useAuthStore } from '@/stores'
-import { useRoute } from 'vue-router'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-
-const auth = useAuthStore()
-const route = useRoute()
-
-const avatarUrl = ref<string | null>(null)
-const objectUrl = ref<string | null>(null)
-
-const navLinks = [
-  { route: '/go/home', label: '主页', icon: '🏠' },
-  { route: '/go/ai-game', label: 'AI对弈', icon: '🤖' },
-  { route: '/go/practice', label: '练习', icon: '🪨' },
-  { route: '/go/analysis', label: '分析', icon: '📊' },
-  { route: '/go/setting', label: '设置', icon: '⚙️' },
-]
-
-const isActive = (linkRoute: string) => {
-  return route.path === linkRoute || route.path.startsWith(linkRoute + '/')
-}
-
-const currentPageTitle = computed(() => {
-  const matched = navLinks.find((item) => isActive(item.route))
-  return matched ? matched.label : '弈境'
-})
-
-const updateAvatar = () => {
-  const avatarData = auth.user?.profile?.avatar
-  if (objectUrl.value) {
-    URL.revokeObjectURL(objectUrl.value)
-    objectUrl.value = null
-  }
-
-  if (!avatarData) {
-    avatarUrl.value = null
-    return
-  }
-
-  let blob: Blob
-
-  if (avatarData instanceof Blob) {
-    blob = avatarData
-  } else if (avatarData instanceof ArrayBuffer || ArrayBuffer.isView(avatarData)) {
-    blob = new Blob([avatarData], { type: 'image/jpeg' })
-  } else if (typeof avatarData === 'string' && (avatarData as string).startsWith('data:image')) {
-    avatarUrl.value = avatarData
-    return
-  } else {
-    console.warn('未知的 avatar 資料格式')
-    return
-  }
-
-  objectUrl.value = URL.createObjectURL(blob)
-  avatarUrl.value = objectUrl.value
-}
-
-const handleImageError = () => {
-  avatarUrl.value = null
-}
-
-onMounted(() => {
-  updateAvatar()
-})
-
-onUnmounted(() => {
-  if (objectUrl.value) {
-    URL.revokeObjectURL(objectUrl.value)
-  }
-})
-</script>
 
 <style scoped>
 .content {

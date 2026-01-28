@@ -1,4 +1,4 @@
-import { apiAiThinking, apiCreateNewGame } from '@/api'
+import { apiAiThinking, apiCreateNewGame, apiGivenGameAnalyst } from '@/api'
 import { Stone, type Position } from '@/types'
 
 /**
@@ -7,19 +7,10 @@ import { Stone, type Position } from '@/types'
 export const useGameStore = defineStore('game', () => {
   /** Board size */
   const size = 19
-  /** Position of Star */
-  const starPoints = computed(() => {
-    const points = [];
-    const starCoords = [3, 9, 15];
-    for (const x of starCoords) {
-      for (const y of starCoords) {
-        points.push({ x, y })
-      }
-    }
-    return points
-  })
   /** real board data, use continue memory to enhance performance */
   const board = new Int8Array(size * size).fill(0)
+  const influenceBoard = new Int8Array(size * size).fill(0)
+
   /** Current player */
   const currentPlayer = ref<Stone>(Stone.Black)
   /** trigger webGL render stone */
@@ -82,14 +73,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   // function to determine if a stone can be placed at (x, y)
-  function canPlaceStone(
-    board: Int8Array,
-    x: number,
-    y: number,
-    color: number,
-    size: number,
-    lastMove: Position | null,
-  ): boolean {
+  function canPlaceStone(board: Int8Array, x: number, y: number, size: number): boolean {
     // check if the position is already occupied
     if (board[y * size + x] !== 0) return false
 
@@ -103,22 +87,7 @@ export const useGameStore = defineStore('game', () => {
   function placeStone(x: number, y: number): boolean {
     const idx = index(x, y)
 
-    if (
-      !canPlaceStone(
-        board,
-        x,
-        y,
-        currentPlayer.value,
-        size,
-        history.value[history.value.length - 1]?.x !== undefined
-          ? {
-              x: history.value[history.value.length - 1]!.x,
-              y: history.value[history.value.length - 1]!.y,
-            }
-          : null,
-      )
-    ) {
-      console.log('Cannot place stone here!')
+    if (!canPlaceStone(board, x, y, size)) {
       return false
     }
 
@@ -153,8 +122,6 @@ export const useGameStore = defineStore('game', () => {
     })
 
     currentPlayer.value = color === Stone.Black ? Stone.White : Stone.Black
-
-    // notify webGL to render
     toggleChanged()
     return true
   }
@@ -205,6 +172,7 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
+  /** notify webGL to rerender the board and stone */
   function toggleChanged() {
     changed.value = !changed.value
   }
@@ -233,6 +201,12 @@ export const useGameStore = defineStore('game', () => {
   function batchSetBoard(arr: Int8Array) {
     for (let index = 0; index < arr.length; index++) {
       board[index] = arr[index]!
+    }
+  }
+
+  function batchSetInfluenceBoard(arr: Int8Array) {
+    for (let index = 0; index < arr.length; index++) {
+      influenceBoard[index] = arr[index]!
     }
   }
 
@@ -398,16 +372,13 @@ export const useGameStore = defineStore('game', () => {
 
   async function getAiThinking(aiAttempts: number) {
     if (!gameId.value) return
-    const { aiSuccess, board: newBoard, currentPlayer: newCurrentPlayer } = await apiAiThinking(
-      board,
-      gameId.value,
-      currentPlayer.value,
-      aiAttempts,
-    )
+    const {
+      aiSuccess,
+      board: newBoard,
+      currentPlayer: newCurrentPlayer,
+    } = await apiAiThinking(board, gameId.value, currentPlayer.value, aiAttempts)
     if (aiSuccess) {
       reRenderBoardFromBackend(newBoard, newCurrentPlayer)
-    } else {
-      // TODO ai 认输
     }
     return aiSuccess
   }
@@ -431,15 +402,21 @@ export const useGameStore = defineStore('game', () => {
     return safeArray
   }
 
+  async function analystImgGame() {
+    const { influence: newInfluence } = await apiGivenGameAnalyst(board)
+    batchSetInfluenceBoard(convertArrayToInt8Array(newInfluence))
+    toggleChanged()
+  }
+
   return {
     // state
     size,
     currentPlayer,
     changed,
     history,
-    starPoints,
     komi,
     board,
+    influenceBoard,
     stoneAt,
     // actions
     placeStone,
@@ -449,5 +426,6 @@ export const useGameStore = defineStore('game', () => {
     reset,
     createNewGame,
     getAiThinking,
+    analystImgGame,
   }
 })
