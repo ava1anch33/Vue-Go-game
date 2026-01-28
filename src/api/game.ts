@@ -13,10 +13,10 @@ export async function apiCreateNewGame(name: string, aiFirst: boolean) {
 }
 
 export async function apiEndGame(gameId: string, board: Int8Array) {
-    return FetchPost('/end-game', {
-        payloadType: 'json',
-        body: { board, gameId },
-    })
+  return FetchPost('/end-game', {
+    payloadType: 'json',
+    body: { board, gameId },
+  })
 }
 
 /**

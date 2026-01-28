@@ -66,7 +66,7 @@ const endGame = async () => {
     title: '胜负判断',
     content: result.result,
   })
-  
+
   apiEndGame(game.gameId!, game.board)
 
   isGaming.value = false

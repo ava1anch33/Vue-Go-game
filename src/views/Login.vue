@@ -83,9 +83,7 @@ const handleSubmit = () => {
       auth.register(formData.email, formData.password)
     }
     router.replace('/home')
-  } catch (error) {
-    
-  }
+  } catch (error) {}
 }
 </script>
 

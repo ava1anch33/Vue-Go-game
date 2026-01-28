@@ -15,17 +15,21 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function handleAuthApi(res: { user: User; accessToken: string }) {
+    if (res) {
+      const { accessToken, user } = res
+      setToken(accessToken)
+      await getUserDetail(user.email)
+      router.replace('/go/home')
+    } else {
+      throw new Error('Network Error')
+    }
+  }
+
   async function login(email: string, password: string) {
     try {
       const res = await apiLogin(email, password)
-      if (res) {
-        const { accessToken, user } = res
-        setToken(accessToken)
-        await getUserDetail(user.email)
-        router.replace('/go/home')
-      } else {
-        throw new Error('Network Error')
-      }
+      handleAuthApi(res)
     } catch {
       localStorage.clear()
       window.location.href = '/login'
@@ -35,16 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(email: string, password: string) {
     try {
       const res = await apiRegister(email, password)
-      console.log(res);
-      
-      if (res) {
-        const { accessToken, user } = res
-        setToken(accessToken)
-        await getUserDetail(user.email)
-        router.replace('/go/home')
-      } else {
-        throw new Error('Network Error')
-      }
+      handleAuthApi(res)
     } catch {
       localStorage.clear()
       window.location.href = '/login'
