@@ -36,9 +36,9 @@ export const useAuthStore = defineStore('auth', () => {
 
 	async function handleAuthApi(res: { user: User; accessToken: string }) {
 		if (res) {
-			const { accessToken, user } = res
+			const { accessToken } = res
 			setToken(accessToken)
-			await getUserDetail(user.email)
+			await getUserDetail()
 			router.replace('/go/home')
 		} else {
 			throw new Error('Network Error')
@@ -65,9 +65,9 @@ export const useAuthStore = defineStore('auth', () => {
 		}
 	}
 
-	async function getUserDetail(email: string) {
+	async function getUserDetail() {
 		try {
-			const res = await apiLookForUserInfo(email)
+			const res = await apiLookForUserInfo()
 			if (res) {
 				currentUser.value = res.user
 			}

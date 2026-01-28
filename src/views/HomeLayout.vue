@@ -61,9 +61,7 @@ const handleImageError = () => {
 }
 
 onMounted(async () => {
-	if (auth.token && auth.user && auth.user.email) {
-		auth.getUserDetail(auth.user?.email)
-	}
+	await auth.getUserDetail()
 	updateAvatar()
 })
 

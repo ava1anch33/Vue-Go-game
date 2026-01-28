@@ -8,4 +8,6 @@ export interface User {
 		firstName: String
 		LastName: String
 	}
+    googleId: string
+    githubId: string
 }

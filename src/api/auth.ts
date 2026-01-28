@@ -21,9 +21,8 @@ export async function apiLogout() {
 	})
 }
 
-export async function apiLookForUserInfo(email: string) {
+export async function apiLookForUserInfo() {
 	return FetchPost<{ user: User }>('/user', {
 		payloadType: 'json',
-		body: { email },
 	})
 }
