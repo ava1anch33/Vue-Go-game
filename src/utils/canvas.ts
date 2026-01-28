@@ -7,40 +7,40 @@ import * as PIXI from 'pixi.js'
  * @returns PIXI Texture
  */
 export function createStoneTexture(radius = 64): PIXI.Texture {
-  const size = radius * 2
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
+	const size = radius * 2
+	const canvas = document.createElement('canvas')
+	canvas.width = size
+	canvas.height = size
 
-  const ctx = canvas.getContext('2d')!
-  ctx.clearRect(0, 0, size, size)
+	const ctx = canvas.getContext('2d')!
+	ctx.clearRect(0, 0, size, size)
 
-  const cx = radius
-  const cy = radius
+	const cx = radius
+	const cy = radius
 
-  const gradient = ctx.createRadialGradient(
-    cx - radius * 0.25,
-    cy - radius * 0.25,
-    radius * 0.2,
-    cx,
-    cy,
-    radius,
-  )
+	const gradient = ctx.createRadialGradient(
+		cx - radius * 0.25,
+		cy - radius * 0.25,
+		radius * 0.2,
+		cx,
+		cy,
+		radius,
+	)
 
-  gradient.addColorStop(0, '#ffffff')
-  gradient.addColorStop(0.5, '#e6e6e6')
-  gradient.addColorStop(1, '#bdbdbd')
+	gradient.addColorStop(0, '#ffffff')
+	gradient.addColorStop(0.5, '#e6e6e6')
+	gradient.addColorStop(1, '#bdbdbd')
 
-  ctx.beginPath()
-  ctx.arc(cx, cy, radius * 0.95, 0, Math.PI * 2)
-  ctx.fillStyle = gradient
-  ctx.fill()
+	ctx.beginPath()
+	ctx.arc(cx, cy, radius * 0.95, 0, Math.PI * 2)
+	ctx.fillStyle = gradient
+	ctx.fill()
 
-  ctx.strokeStyle = 'rgba(0,0,0,0.25)'
-  ctx.lineWidth = radius * 0.05
-  ctx.stroke()
+	ctx.strokeStyle = 'rgba(0,0,0,0.25)'
+	ctx.lineWidth = radius * 0.05
+	ctx.stroke()
 
-  return PIXI.Texture.from(canvas)
+	return PIXI.Texture.from(canvas)
 }
 
 const BASE_TEXTURE_SIZE = 128
@@ -56,26 +56,26 @@ export const texture = createStoneTexture()
  * @returns PIXI.IParticle
  */
 export function createStoneParticle(
-  x: number,
-  y: number,
-  stone: Stone,
-  cellSize: number,
+	x: number,
+	y: number,
+	stone: Stone,
+	cellSize: number,
 ): PIXI.IParticle {
-  const scale = cellSize / BASE_TEXTURE_SIZE
+	const scale = cellSize / BASE_TEXTURE_SIZE
 
-  return new PIXI.Particle({
-    texture,
-    x: (x + 0.5) * cellSize,
-    y: (y + 0.5) * cellSize,
+	return new PIXI.Particle({
+		texture,
+		x: (x + 0.5) * cellSize,
+		y: (y + 0.5) * cellSize,
 
-    scaleX: scale,
-    scaleY: scale,
+		scaleX: scale,
+		scaleY: scale,
 
-    anchorX: 0.5,
-    anchorY: 0.5,
+		anchorX: 0.5,
+		anchorY: 0.5,
 
-    rotation: 0,
+		rotation: 0,
 
-    tint: stone === Stone.Black ? new PIXI.Color('black') : new PIXI.Color('white').setAlpha(1),
-  })
+		tint: stone === Stone.Black ? new PIXI.Color('black') : new PIXI.Color('white').setAlpha(1),
+	})
 }

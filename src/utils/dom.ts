@@ -1,17 +1,17 @@
 import { funnel } from 'remeda'
 
 export function throttle<T extends (arg?: any) => any>(fn: T, waitMs: number): () => void {
-  const throttled = funnel(
-    () => {
-      fn()
-    },
-    {
-      minGapMs: waitMs,
-      triggerAt: 'start',
-    },
-  )
+	const throttled = funnel(
+		() => {
+			fn()
+		},
+		{
+			minGapMs: waitMs,
+			triggerAt: 'start',
+		},
+	)
 
-  return () => {
-    throttled.call()
-  }
+	return () => {
+		throttled.call()
+	}
 }
