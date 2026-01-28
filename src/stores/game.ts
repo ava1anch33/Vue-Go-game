@@ -1,5 +1,5 @@
 import { apiAiThinking, apiCreateNewGame, apiGivenGameAnalyst } from '@/api'
-import { Stone, type Position } from '@/types'
+import { Stone } from '@/types'
 
 /**
  * Game Store - manages the state of the Go game including board size, stones, current player, and history.
@@ -416,6 +416,7 @@ export const useGameStore = defineStore('game', () => {
     history,
     komi,
     board,
+    gameId,
     influenceBoard,
     stoneAt,
     // actions

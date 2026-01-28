@@ -20,7 +20,7 @@ async function analystImage() {
 
 <template>
   <div class="game-layout">
-    <div class="cursor-disable">
+    <div>
       <BoardPixi :forbidden-click="analyzing" :callback="clickBoard" :show-influence="true" />
     </div>
 

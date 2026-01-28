@@ -76,10 +76,15 @@ const toggleMode = () => {
 }
 
 const handleSubmit = () => {
-  if (isLogin.value) {
-    auth.login(formData.email, formData.password)
+  try {
+    if (isLogin.value) {
+      auth.login(formData.email, formData.password)
+    } else {
+      auth.register(formData.email, formData.password)
+    }
     router.replace('/home')
-  } else {
+  } catch (error) {
+    
   }
 }
 </script>

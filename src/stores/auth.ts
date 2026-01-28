@@ -1,4 +1,4 @@
-import { apiLogin, apiLogout, apiLookForUserInfo } from '@/api'
+import { apiLogin, apiLogout, apiLookForUserInfo, apiRegister } from '@/api'
 import router from '@/router'
 import type { User } from '@/types'
 
@@ -18,6 +18,25 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(email: string, password: string) {
     try {
       const res = await apiLogin(email, password)
+      if (res) {
+        const { accessToken, user } = res
+        setToken(accessToken)
+        await getUserDetail(user.email)
+        router.replace('/go/home')
+      } else {
+        throw new Error('Network Error')
+      }
+    } catch {
+      localStorage.clear()
+      window.location.href = '/login'
+    }
+  }
+
+  async function register(email: string, password: string) {
+    try {
+      const res = await apiRegister(email, password)
+      console.log(res);
+      
       if (res) {
         const { accessToken, user } = res
         setToken(accessToken)
@@ -69,6 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
     },
     hasToken,
     login,
+    register,
     logout,
     setToken,
     clearToken,

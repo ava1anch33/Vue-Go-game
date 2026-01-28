@@ -8,6 +8,7 @@ import RadioGroup from '@/components/ui/RadioGroup.vue'
 import Radio from '@/components/ui/Radio.vue'
 import Slider from '@/components/ui/Slider.vue'
 import { showDialog } from '@/components/ui/dialog'
+import { apiEndGame } from '@/api'
 
 const game = useGameStore()
 
@@ -65,6 +66,8 @@ const endGame = async () => {
     title: '胜负判断',
     content: result.result,
   })
+  
+  apiEndGame(game.gameId!, game.board)
 
   isGaming.value = false
   game.reset()
