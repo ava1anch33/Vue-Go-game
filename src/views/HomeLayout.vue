@@ -60,7 +60,10 @@ const handleImageError = () => {
   avatarUrl.value = null
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (auth.token && auth.user && auth.user.email) {
+    auth.getUserDetail(auth.user?.email)
+  }
   updateAvatar()
 })
 
@@ -202,7 +205,7 @@ onUnmounted(() => {
   height: 100vh;
   display: flex;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #f0efff;
+  color: #9f9cca;
   font-family:
     system-ui,
     -apple-system,

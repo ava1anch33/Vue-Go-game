@@ -62,15 +62,19 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth
-  console.log(isAuthenticated())
+  const auth = useAuthStore()
 
-  if (requiresAuth && !isAuthenticated()) {
-    // no auth -> to login
-    next({ name: 'login' })
-  } else {
-    next()
+  if (to.name === 'login' && auth.hasToken()) {
+    next({ name: 'Home' })
+    return
   }
+
+  if (to.meta.requiresAuth && !auth.hasToken()) {
+    next({ name: 'login' })
+    return
+  }
+
+  next()
 })
 
 export default router

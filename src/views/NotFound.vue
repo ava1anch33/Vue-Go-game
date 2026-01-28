@@ -1,93 +1,132 @@
-<script setup lang="ts">
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-const goHome = () => {
-  router.push('/')
-}
-</script>
-
 <template>
-  <div class="notfound">
-    <div class="container">
-      <div class="code">404</div>
-      <div class="title">页面不见了</div>
-      <div class="desc">你访问的页面可能被移除、重命名，或者从未存在过</div>
-
-      <div class="actions">
-        <button class="btn" @click="goHome">返回首页</button>
-      </div>
+  <div ref="container" class="notfound-root">
+    <div class="overlay">
+      <h1>404</h1>
+      <p>棋局之外 · 此路不通</p>
+      <button @click="goHome">回到首页</button>
     </div>
   </div>
 </template>
 
+<script setup lang="ts">
+import * as PIXI from 'pixi.js'
+
+const container = ref<HTMLDivElement | null>(null)
+const router = useRouter()
+
+let app: PIXI.Application | null = null
+let particleLayer: PIXI.Container | null = null
+
+const goHome = () => {
+  router.replace({ name: 'Home' })
+}
+
+function random(min: number, max: number) {
+  return Math.random() * (max - min) + min
+}
+
+async function initPixi() {
+  if (!container.value) return
+
+  app = new PIXI.Application()
+  await app.init({
+    resizeTo: container.value,
+    backgroundAlpha: 0,
+    antialias: true,
+    resolution: window.devicePixelRatio || 1,
+  })
+
+  container.value.appendChild(app.canvas)
+
+  particleLayer = new PIXI.Container()
+  app.stage.addChild(particleLayer)
+
+  for (let i = 0; i < 100; i++) {
+    const g = new PIXI.Graphics()
+    const isBlack = Math.random() > 0.5
+    const size = random(4, 10)
+
+    g.circle(0, 0, size)
+      .fill({ color: isBlack ? 0x111111 : 0xffffff, alpha: 0.35 })
+
+    g.x = random(0, app.renderer.width)
+    g.y = random(0, app.renderer.height)
+
+    ;(g as any).vx = random(-0.3, 0.3)
+    ;(g as any).vy = random(-0.3, 0.3)
+
+    particleLayer.addChild(g)
+  }
+
+  app.ticker.add(() => {
+    particleLayer!.children.forEach((p: any) => {
+      p.x += p.vx
+      p.y += p.vy
+
+      if (p.x < 0 || p.x > app!.renderer.width) p.vx *= -1
+      if (p.y < 0 || p.y > app!.renderer.height) p.vy *= -1
+    })
+  })
+}
+
+onMounted(initPixi)
+
+onUnmounted(() => {
+  app?.destroy(true, { children: true })
+  app = null
+})
+</script>
+
 <style scoped>
-.notfound {
+.notfound-root {
+  position: relative;
   width: 100vw;
   height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
+  pointer-events: auto;
   color: #fff;
-}
-
-.container {
   text-align: center;
-  animation: fadeIn 0.8s ease-out;
+  backdrop-filter: blur(2px);
 }
 
-.code {
+.overlay h1 {
   font-size: 120px;
+  margin: 0;
   font-weight: 800;
-  letter-spacing: 8px;
-  line-height: 1;
-  text-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  letter-spacing: 6px;
 }
 
-.title {
-  margin-top: 20px;
-  font-size: 28px;
-  font-weight: 600;
-}
-
-.desc {
-  margin-top: 12px;
-  font-size: 16px;
+.overlay p {
+  font-size: 18px;
   opacity: 0.85;
+  margin-bottom: 32px;
 }
 
-.actions {
-  margin-top: 36px;
-}
-
-.btn {
-  padding: 12px 32px;
-  border-radius: 999px;
+.overlay button {
+  padding: 12px 28px;
+  font-size: 16px;
+  border-radius: 24px;
   border: none;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 500;
   cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: all 0.25s ease;
+  color: #764ba2;
+  background: #fff;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.btn:hover {
-  background: rgba(255, 255, 255, 0.28);
+.overlay button:hover {
   transform: translateY(-2px);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 </style>

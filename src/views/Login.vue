@@ -75,14 +75,14 @@ const toggleMode = () => {
   formData.confirmPassword = ''
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   try {
     if (isLogin.value) {
-      auth.login(formData.email, formData.password)
+      await auth.login(formData.email, formData.password)
     } else {
-      auth.register(formData.email, formData.password)
+      await auth.register(formData.email, formData.password)
     }
-    router.replace('/home')
+    router.replace({ name: 'Home' })
   } catch (error) {}
 }
 </script>

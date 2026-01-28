@@ -6,6 +6,25 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   const currentUser = ref<User | null>(null)
 
+  function hasToken(): boolean {
+    syncTokenWithStore()
+    return Boolean(token.value)
+  }
+
+  function setToken(newToken: string) {
+    token.value = newToken
+    localStorage.setItem('accessToken', newToken)
+  }
+
+  function clearToken() {
+    token.value = null
+    localStorage.removeItem('accessToken')
+  }
+
+  function syncTokenWithStore() {
+    token.value = localStorage.getItem('accessToken')
+  }
+
   async function logout() {
     try {
       await apiLogout()
@@ -55,25 +74,6 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error) {}
   }
 
-  function hasToken(): boolean {
-    syncTokenWithStore()
-    return Boolean(token.value)
-  }
-
-  function setToken(newToken: string) {
-    token.value = newToken
-    localStorage.setItem('accessToken', newToken)
-  }
-
-  function clearToken() {
-    token.value = null
-    localStorage.removeItem('accessToken')
-  }
-
-  function syncTokenWithStore() {
-    token.value = localStorage.getItem('accessToken')
-  }
-
   return {
     get token() {
       return token
@@ -87,5 +87,6 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     setToken,
     clearToken,
+    getUserDetail
   }
 })
