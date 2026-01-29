@@ -1,5 +1,4 @@
 import { apiLogin, apiLogout, apiLookForUserInfo, apiRegister } from '@/api'
-import router from '@/router'
 import type { User } from '@/types'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -39,7 +38,6 @@ export const useAuthStore = defineStore('auth', () => {
 			const { accessToken } = res
 			setToken(accessToken)
 			await getUserDetail()
-			router.replace('/go/home')
 		} else {
 			throw new Error('Network Error')
 		}

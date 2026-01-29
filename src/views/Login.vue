@@ -92,7 +92,7 @@ const handleSubmit = async () => {
 		} else {
 			await auth.register(formData.email, formData.password)
 		}
-		router.replace({ name: 'Home' })
+		router.replace({ name: 'Practice' })
 	} catch (error) {}
 }
 </script>
